@@ -1,48 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { hongosAPI, imagenesAPI } from './api';
+import { NotImage } from '../../components/NotImage';
+import toast from 'react-hot-toast';
+
+
+const tipo = {
+  1: 'Silvestre',
+  0: 'Cultivo'
+}
 
 const HongosAdmin = () => {
   const navigate = useNavigate();
   const [hongos, setHongos] = useState([]);
+  const [imagenesHongos, setImagenesHongos] = useState({});
   const [loading, setLoading] = useState(true);
-
-  // Datos de ejemplo basados en la imagen
-  const datosEjemplo = {
-    hongos: [
-      {
-        id: 1,
-        nombreCientifico: 'Dacryopinax spathularia',
-        nombreComun: '',
-        tipo: 'Silvestre',
-        comestible: false,
-        imagen: '/placeholder-image.jpg'
-      },
-      {
-        id: 2,
-        nombreCientifico: 'Russula virescens',
-        nombreComun: 'Gorro Verde',
-        tipo: 'Silvestre',
-        comestible: false,
-        imagen: '/placeholder-image.jpg'
-      },
-      {
-        id: 3,
-        nombreCientifico: 'Pleurotus ostreatus',
-        nombreComun: '',
-        tipo: 'Silvestre',
-        comestible: true,
-        imagen: '/placeholder-image.jpg'
-      },
-      {
-        id: 4,
-        nombreCientifico: 'Volvariella bombycina',
-        nombreComun: 'Volvaria sedosa',
-        tipo: 'Cultivo',
-        comestible: true,
-        imagen: '/placeholder-image.jpg'
-      }
-    ]
-  };
 
   useEffect(() => {
     cargarDatos();
@@ -51,13 +23,22 @@ const HongosAdmin = () => {
   const cargarDatos = async () => {
     try {
       setLoading(true);
-      // TODO: Implementar llamada a la API
-      // const response = await fetch('/api/hongos');
-      // const data = await response.json();
-      // setHongos(data.hongos);
+      const data = await hongosAPI.getAll();
+      setHongos(data || []);
       
-      // Datos de ejemplo por ahora
-      setHongos(datosEjemplo.hongos);
+      // Cargar primera imagen de cada hongo
+      const imagenesMap = {};
+      for (const hongo of data || []) {
+        try {
+          const imagenes = await imagenesAPI.getByHongoId(hongo.id_hongo);
+          if (imagenes && imagenes.length > 0) {
+            imagenesMap[hongo.id_hongo] = imagenes[0].id;
+          }
+        } catch (imageError) {
+          console.error(`Error al cargar imágenes del hongo ${hongo.id_hongo}:`, imageError);
+        }
+      }
+      setImagenesHongos(imagenesMap);
     } catch (error) {
       console.error('Error al cargar datos:', error);
     } finally {
@@ -76,18 +57,21 @@ const HongosAdmin = () => {
 
   const eliminarHongo = async (id) => {
     // TODO: Implementar eliminación de hongo
-    console.log('Eliminar hongo:', id);
-    // const response = await fetch(`/api/hongos/${id}`, { method: 'DELETE' });
-    // if (response.ok) {
-    //   cargarDatos(); // Recargar datos
-    // }
+    try {
+      const response = await hongosAPI.delete(id);
+      if (response) {
+        toast.success('Hongo eliminado con éxito');
+        cargarDatos(); // Recargar datos
+      }
+    } catch (error) {
+      console.error('Error al eliminar hongo:', error);
+      toast.error('Error al eliminar el hongo');
+    }
   };
 
   // Métodos de navegación
   const verSitio = () => {
-    // TODO: Implementar navegación al sitio público
-    console.log('Ver sitio público');
-    // window.open('/', '_blank');
+    window.open('/', '_blank');
   };
 
   if (loading) {
@@ -133,18 +117,22 @@ const HongosAdmin = () => {
         {hongos.map((hongo) => (
           <div key={hongo.id} className="bg-white rounded-lg shadow-md p-4">
             <div className="flex items-start gap-3 mb-3">
-              <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center">
-                <svg className="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
-                </svg>
-              </div>
+              {imagenesHongos[hongo.id_hongo] ? (
+                <img
+                  src={`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/imagenes/${imagenesHongos[hongo.id_hongo]}`}
+                  alt={hongo.nombre_es}
+                  className="w-12 h-12 object-cover rounded-lg"
+                />
+              ) : (
+                <NotImage />
+              )}
               <div className="flex-1">
                 <h3 className="font-bold text-gray-900 text-sm">
-                  {hongo.nombreCientifico}
+                  {hongo.nombre_es}
                 </h3>
-                {hongo.nombreComun && (
+                {hongo.nombre_nah && (
                   <p className="text-gray-600 text-xs">
-                    ({hongo.nombreComun})
+                    ({hongo.nombre_nah})
                   </p>
                 )}
               </div>
@@ -163,7 +151,7 @@ const HongosAdmin = () => {
                       <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
                     </svg>
                   )}
-                  <span className="text-sm font-medium">{hongo.tipo}</span>
+                  <span className="text-sm font-medium">{tipo[hongo.tipo]}</span>
                 </div>
               </div>
 
@@ -177,7 +165,7 @@ const HongosAdmin = () => {
 
             <div className="flex gap-2">
               <button
-                onClick={() => editarHongo(hongo.id)}
+                onClick={() => editarHongo(hongo.id_hongo)}
                 className="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-2 px-3 rounded-lg flex items-center justify-center gap-1 text-sm transition-colors"
               >
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -187,7 +175,7 @@ const HongosAdmin = () => {
               </button>
 
               <button
-                onClick={() => eliminarHongo(hongo.id)}
+                onClick={() => eliminarHongo(hongo.id_hongo)}
                 className="flex-1 bg-red-500 hover:bg-red-600 text-white py-2 px-3 rounded-lg flex items-center justify-center gap-1 text-sm transition-colors"
               >
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">

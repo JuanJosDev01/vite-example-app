@@ -1,16 +1,20 @@
 import { Fragment, useEffect, useState } from "react";
 import { Card } from "../components/Card";
-import { LuFilter } from "react-icons/lu";
-import axios from "axios";
+import { LuFilter, LuGalleryHorizontal } from "react-icons/lu";
+import { ModalComponent } from "../components/Modal";
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { hongosAPI } from './admin/api';
+
 
 export const Lista = () => {
 
   const [hongos, setHongos] = useState([]);
-
+  const [modalIsOpen, setIsOpen] = useState(false);
+  
   const fetchHongos = async () => {
     try {
-      const response = await axios.get("http://localhost:3000/hongos");
-      setHongos(response.data);
+      const response = await hongosAPI.getAll();
+      setHongos(response || []);
     } catch (error) {
       console.error("Error fetching hongos:", error);
     }
@@ -23,7 +27,7 @@ export const Lista = () => {
   return (
     <Fragment>
       <header className="bg-green-600 w-full h-20 flex items-center justify-center">
-        <h1 className="text-3xl font-bold text-white">
+        <h1 className="text-3xl font-bold text-white" id="prueba">
           Catálogo Profesional de Hongos
         </h1>
       </header>
@@ -71,10 +75,25 @@ export const Lista = () => {
               significado_local={hongo.significado_local}
               tecnicas_recoleccion={hongo.tecnicas_recoleccion}
               usos={hongo.usos}
+              id_hongo={hongo.id_hongo}
             />
           ))}
         </section>
       </main>
+      <ModalComponent isOpen={modalIsOpen} setIsOpen={setIsOpen}>
+        <Swiper
+          spaceBetween={50}
+          slidesPerView={3}
+          onSlideChange={() => console.log('slide change')}
+          onSwiper={(swiper) => console.log(swiper)}
+        >
+          <SwiperSlide>Slide 1</SwiperSlide>
+          <SwiperSlide>Slide 2</SwiperSlide>
+          <SwiperSlide>Slide 3</SwiperSlide>
+          <SwiperSlide>Slide 4</SwiperSlide>
+          ...
+        </Swiper>
+      </ModalComponent>
     </Fragment>
   );
 };

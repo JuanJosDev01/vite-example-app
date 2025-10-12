@@ -8,6 +8,9 @@ import UsuariosAdmin from "./pages/admin/usuarios";
 import CrearHongo from "./pages/admin/crear-hongo";
 import EditarHongo from "./pages/admin/editar-hongo";
 import "./App.css";
+import 'leaflet/dist/leaflet.css';
+import 'swiper/css';
+
 
 function App() {
   return (

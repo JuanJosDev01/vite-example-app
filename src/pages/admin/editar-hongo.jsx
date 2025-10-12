@@ -1,5 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { hongosAPI, imagenesAPI } from './api';
+import toast from 'react-hot-toast';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Navigation, Pagination, Autoplay } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/navigation';
+import 'swiper/css/pagination';
 
 const EditarHongo = () => {
   const navigate = useNavigate();
@@ -7,36 +14,21 @@ const EditarHongo = () => {
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
   const [formData, setFormData] = useState({
-    nombreCientifico: '',
-    descripcion: '',
+    nombre_es: '',
+    nombre_nah: '',
+    descripcion_es: '',
+    descripcion_nah: '',
     usos: '',
-    tecnicasRecoleccion: '',
+    tecnicas_recoleccion: '',
     cultivo: '',
     conservacion: '',
     ritualidad: '',
-    significadoLocal: '',
-    tipo: '',
-    comestible: false,
+    significado_local: '',
+    comestible: 'No',
     imagen: null,
-    imagenActual: ''
+    tipo: ''
   });
-
-  // Datos de ejemplo basados en la imagen
-  const datosEjemplo = {
-    1: {
-      nombreCientifico: 'Dacryopinax spathularia',
-      descripcion: 'Hongo silvestre con forma de abanico o espátula, de color amarillo brillante a naranja. Su textura es gelatinosa y crece sobre madera en descomposición.',
-      usos: 'No se consume comúnmente debido a su textura gelatinosa y sabor neutro; en algunas regiones se incluye cocido en sopas. Posee compuestos bioactivos con potencial antioxidante y antiinflamatorio, de interés en estudios farmacológicos y biotecnológicos.',
-      tecnicasRecoleccion: 'Se recolecta manualmente sobre madera muerta o troncos en descomposición, evitando dañar el micelio. La recolección se realiza principalmente en temporadas húmedas, cuando los basidiocarpos están en pleno desarrollo.',
-      cultivo: 'Cultivo poco frecuente; requiere condiciones específicas de humedad y madera descompuesta. Puede intentarse en madera esterilizada y húmeda en ambientes controlados, pero generalmente se recolecta en su hábitat natural.',
-      conservacion: 'Se conserva mediante deshidratación a baja temperatura y almacenamiento en recipientes herméticos, protegidos de luz y humedad. Para investigación, también puede conservarse en soluciones de glicerol o refrigerada para estudios micológicos.',
-      ritualidad: 'No existen registros extensos de ritualidad específica; en algunas culturas los hongos gelatinosos se asocian a la fertilidad de la tierra o a la purificación de espacios naturales.',
-      significadoLocal: 'Se considera un indicador ecológico de bosques saludables y madera en descomposición, aportando conocimiento tradicional sobre la naturaleza y los ciclos ecológicos de la región.',
-      tipo: 'Silvestre',
-      comestible: false,
-      imagenActual: '/placeholder-image.jpg'
-    }
-  };
+  const [imagenesExistentes, setImagenesExistentes] = useState([]);
 
   useEffect(() => {
     cargarDatosHongo();
@@ -44,15 +36,36 @@ const EditarHongo = () => {
 
   const cargarDatosHongo = async () => {
     try {
+      console.log('Cargando datos del hongo con ID:', id);
       setLoadingData(true);
-      // TODO: Implementar llamada a la API
-      // const response = await fetch(`/api/hongos/${id}`);
-      // const data = await response.json();
-      // setFormData(data);
       
-      // Datos de ejemplo por ahora
-      if (datosEjemplo[id]) {
-        setFormData(datosEjemplo[id]);
+      // Cargar datos del hongo
+      const response = await hongosAPI.getById(id);
+      if (response) {
+        setFormData({
+          nombre_es: response.nombre_es || '',
+          nombre_nah: response.nombre_nah || '',
+          descripcion_es: response.descripcion_es || '',
+          descripcion_nah: response.descripcion_nah || '',
+          usos: response.usos || '',
+          tecnicas_recoleccion: response.tecnicas_recoleccion || '',
+          cultivo: response.cultivo || '',
+          conservacion: response.conservacion || '',
+          ritualidad: response.ritualidad || '',
+          significado_local: response.significado_local || '',
+          comestible: response.comestible,
+          imagen: null, // Imagen nueva (si se sube)
+          tipo: response.tipo || ''
+        });
+      }
+
+      // Cargar imágenes existentes del hongo
+      try {
+        const imagenes = await imagenesAPI.getByHongoId(id);
+        setImagenesExistentes(imagenes || []);
+      } catch (imageError) {
+        console.error('Error al cargar imágenes:', imageError);
+        setImagenesExistentes([]);
       }
     } catch (error) {
       console.error('Error al cargar datos del hongo:', error);
@@ -84,27 +97,36 @@ const EditarHongo = () => {
     setLoading(true);
 
     try {
-      // TODO: Implementar actualización de hongo
-      console.log('Actualizar hongo:', formData);
+      // Crear FormData sin la imagen
+      const formDataToSend = new FormData();
+      for (const key in formData) {
+        if (key !== 'imagen' && formData[key] !== null) {
+          formDataToSend.append(key, formData[key]);
+        }
+      }
+
+      // Actualizar el hongo sin imagen
+      const response = await hongosAPI.update(id, formDataToSend);
       
-      // Simular llamada a API
-      // const response = await fetch(`/api/hongos/${id}`, {
-      //   method: 'PUT',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(formData)
-      // });
-      
-      // if (response.ok) {
-      //   navigate('/admin/hongos');
-      // }
-      
-      // Por ahora solo navegar de vuelta
-      setTimeout(() => {
+      if (response) {
+        // Si hay nueva imagen, subirla usando el nuevo endpoint
+        if (formData.imagen) {
+          try {
+            await imagenesAPI.upload(id, [formData.imagen]);
+            toast.success('Hongo actualizado con nueva imagen con éxito');
+          } catch (imageError) {
+            console.error('Error al subir nueva imagen:', imageError);
+            toast.success('Hongo actualizado con éxito, pero hubo un error al subir la nueva imagen');
+          }
+        } else {
+          toast.success('Hongo actualizado con éxito');
+        }
+        
         navigate('/admin/hongos');
-      }, 1000);
-      
+      }
     } catch (error) {
       console.error('Error al actualizar hongo:', error);
+      toast.error('Error al actualizar el hongo');
     } finally {
       setLoading(false);
     }
@@ -113,6 +135,8 @@ const EditarHongo = () => {
   const handleCancel = () => {
     navigate('/admin/hongos');
   };
+
+  console.log('Formulario estado:', formData);
 
   if (loadingData) {
     return (
@@ -142,14 +166,14 @@ const EditarHongo = () => {
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Nombre del hongo */}
           <div>
-            <label htmlFor="nombreCientifico" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="nombre_es" className="block text-sm font-medium text-gray-700 mb-2">
               Nombre del hongo
             </label>
             <input
               type="text"
-              id="nombreCientifico"
-              name="nombreCientifico"
-              value={formData.nombreCientifico}
+              id="nombre_es"
+              name="nombre_es"
+              value={formData.nombre_es}
               onChange={handleInputChange}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
               placeholder="Ej: Pleurotus ostreatus"
@@ -159,13 +183,13 @@ const EditarHongo = () => {
 
           {/* Descripción */}
           <div>
-            <label htmlFor="descripcion" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="descripcion_es" className="block text-sm font-medium text-gray-700 mb-2">
               Descripción
             </label>
             <textarea
-              id="descripcion"
-              name="descripcion"
-              value={formData.descripcion}
+              id="descripcion_es"
+              name="descripcion_es"
+              value={formData.descripcion_es}
               onChange={handleInputChange}
               rows={4}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-vertical"
@@ -191,13 +215,13 @@ const EditarHongo = () => {
 
           {/* Técnicas de Recolección */}
           <div>
-            <label htmlFor="tecnicasRecoleccion" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="tecnicas_recoleccion" className="block text-sm font-medium text-gray-700 mb-2">
               Técnicas de Recolección
             </label>
             <textarea
-              id="tecnicasRecoleccion"
-              name="tecnicasRecoleccion"
-              value={formData.tecnicasRecoleccion}
+              id="tecnicas_recoleccion"
+              name="tecnicas_recoleccion"
+              value={formData.tecnicas_recoleccion}
               onChange={handleInputChange}
               rows={4}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-vertical"
@@ -255,13 +279,13 @@ const EditarHongo = () => {
 
           {/* Significado Local */}
           <div>
-            <label htmlFor="significadoLocal" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="significado_local" className="block text-sm font-medium text-gray-700 mb-2">
               Significado Local
             </label>
             <textarea
-              id="significadoLocal"
-              name="significadoLocal"
-              value={formData.significadoLocal}
+              id="significado_local"
+              name="significado_local"
+              value={formData.significado_local}
               onChange={handleInputChange}
               rows={4}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-vertical"
@@ -285,8 +309,8 @@ const EditarHongo = () => {
                 required
               >
                 <option value="">Selecciona tipo</option>
-                <option value="Silvestre">Silvestre</option>
-                <option value="Cultivo">Cultivo</option>
+                <option value="1">Silvestre</option>
+                <option value="0">Cultivo</option>
               </select>
             </div>
 
@@ -301,8 +325,8 @@ const EditarHongo = () => {
                     type="radio"
                     name="comestible"
                     value="true"
-                    checked={formData.comestible === true}
-                    onChange={() => setFormData(prev => ({ ...prev, comestible: true }))}
+                    checked={(formData.comestible === 'Si' || formData.comestible === 'Sí')}
+                    onChange={() => setFormData(prev => ({ ...prev, comestible: 'Si' }))}
                     className="mr-2 text-green-600 focus:ring-teal-500"
                   />
                   <span className="text-green-600 font-medium">✓ Sí Comestible</span>
@@ -312,8 +336,8 @@ const EditarHongo = () => {
                     type="radio"
                     name="comestible"
                     value="false"
-                    checked={formData.comestible === false}
-                    onChange={() => setFormData(prev => ({ ...prev, comestible: false }))}
+                    checked={(formData.comestible === 'No' || formData.comestible === 'No')}
+                    onChange={() => setFormData(prev => ({ ...prev, comestible: 'No' }))}
                     className="mr-2 text-red-600 focus:ring-teal-500"
                   />
                   <span className="text-red-600 font-medium">✗ No Comestible</span>
@@ -327,16 +351,61 @@ const EditarHongo = () => {
             <label htmlFor="imagen" className="block text-sm font-medium text-gray-700 mb-2">
               Imagen Portada
             </label>
-            
-            {/* Mostrar imagen actual si existe */}
-            {formData.imagenActual && !formData.imagen && (
+            {/* Mostrar imágenes existentes */}
+            {imagenesExistentes.length > 0 && !formData.imagen && (
               <div className="mb-4">
-                <p className="text-sm text-gray-600 mb-2">Imagen actual:</p>
-                <div className="w-32 h-32 bg-gray-200 rounded-lg flex items-center justify-center">
-                  <svg className="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
-                  </svg>
-                </div>
+                <p className="text-sm text-gray-600 mb-2">Imágenes actuales:</p>
+                <Swiper
+                  modules={[Navigation, Pagination, Autoplay]}
+                  spaceBetween={20}
+                  slidesPerView={1}
+                  navigation
+                  pagination={{ clickable: true }}
+                  autoplay={{
+                    delay: 3000,
+                    disableOnInteraction: false,
+                  }}
+                  breakpoints={{
+                    640: {
+                      slidesPerView: 2,
+                    },
+                    768: {
+                      slidesPerView: 3,
+                    },
+                    1024: {
+                      slidesPerView: 4,
+                    },
+                  }}
+                  className="mySwiper"
+                >
+                  {imagenesExistentes.map((imagen, index) => (
+                    <SwiperSlide key={imagen.id || index}>
+                      <div className="relative group">
+                        <img
+                          src={`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/imagenes/${imagen.id}`}
+                          alt={`Imagen ${index + 1}`}
+                          className="w-full h-48 object-cover rounded-lg shadow-md"
+                        />
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            try {
+                              await imagenesAPI.deleteById(imagen.id);
+                              setImagenesExistentes(prev => prev.filter(img => img.id !== imagen.id));
+                              toast.success('Imagen eliminada');
+                            } catch (error) {
+                              console.error('Error al eliminar imagen:', error);
+                              toast.error('Error al eliminar la imagen');
+                            }
+                          }}
+                          className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm hover:bg-red-600 transition-colors opacity-0 group-hover:opacity-100"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    </SwiperSlide>
+                  ))}
+                </Swiper>
               </div>
             )}
 
@@ -347,7 +416,7 @@ const EditarHongo = () => {
                 </svg>
                 <div className="flex text-sm text-gray-600">
                   <label htmlFor="imagen" className="relative cursor-pointer bg-white rounded-md font-medium text-teal-600 hover:text-teal-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-teal-500">
-                    <span>Cambiar imagen</span>
+                    <span>Agregar imagen</span>
                     <input
                       id="imagen"
                       name="imagen"

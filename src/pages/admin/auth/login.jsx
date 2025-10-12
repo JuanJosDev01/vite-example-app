@@ -4,12 +4,10 @@ import { useNavigate } from 'react-router';
 
 export const Login = () => {
   const [formData, setFormData] = useState({
-    email: 'admin',
-    password: '********'
+    email: 'pedro@micodat.local',
+    password: '12345'
   });
   const navigate = useNavigate();
-
-  console.log(formData);
 
   const { login, isLoading, error } = useAuth();
 

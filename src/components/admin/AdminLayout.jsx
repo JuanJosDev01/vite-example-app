@@ -1,13 +1,12 @@
-import React from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
+import { Toaster } from 'react-hot-toast';
 
 const AdminLayout = () => {
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* Sidebar */}
       <Sidebar />
-      
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
         {/* Header */}
@@ -22,6 +21,7 @@ const AdminLayout = () => {
           <Outlet />
         </div>
       </div>
+      <Toaster position='top-right' reverseOrder={false} />
     </div>
   );
 };

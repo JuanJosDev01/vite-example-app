@@ -1,26 +1,30 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { hongosAPI, imagenesAPI } from './api';
+import toast from 'react-hot-toast';
 
 const CrearHongo = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    nombreCientifico: '',
-    descripcion: '',
+  const [formState, setFormState] = useState({
+    nombre_es: '',
+    nombre_nah: '',
+    descripcion_es: '',
+    descripcion_nah: '',
     usos: '',
-    tecnicasRecoleccion: '',
+    tecnicas_recoleccion: '',
     cultivo: '',
     conservacion: '',
     ritualidad: '',
-    significadoLocal: '',
-    tipo: '',
-    comestible: false,
-    imagen: null
+    significado_local: '',
+    comestible: 'No',
+    imagen: null,
+    tipo: ''
   });
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
+    setFormState(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
@@ -29,7 +33,7 @@ const CrearHongo = () => {
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setFormData(prev => ({
+      setFormState(prev => ({
         ...prev,
         imagen: file
       }));
@@ -41,27 +45,40 @@ const CrearHongo = () => {
     setLoading(true);
 
     try {
-      // TODO: Implementar creación de hongo
-      console.log('Crear hongo:', formData);
+      // Crear FormData sin la imagen
+      const adminHongoFormData = new FormData();
+      Object.entries(formState).forEach(([key, value]) => {
+        // Excluir la imagen del FormData inicial
+        if (key !== 'imagen' && value !== null) {
+          adminHongoFormData.append(key, value);
+        }
+      });
+
+      // Crear el hongo sin imagen
+      const response = await hongosAPI.create(adminHongoFormData);
       
-      // Simular llamada a API
-      // const response = await fetch('/api/hongos', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(formData)
-      // });
-      
-      // if (response.ok) {
-      //   navigate('/admin/hongos');
-      // }
-      
-      // Por ahora solo navegar de vuelta
-      setTimeout(() => {
+      if (response && response.id) {
+        // Si hay imagen, subirla usando el nuevo endpoint
+        if (formState.imagen) {
+          try {
+            await imagenesAPI.upload(response.id, [formState.imagen]);
+            toast.success('Hongo creado con imagen con éxito');
+          } catch (imageError) {
+            console.error('Error al subir imagen:', imageError);
+            toast.success('Hongo creado con éxito, pero hubo un error al subir la imagen');
+          }
+        } else {
+          toast.success('Hongo creado con éxito');
+        }
+        
         navigate('/admin/hongos');
-      }, 1000);
-      
+      } else {
+        toast.error('Error al crear el hongo');
+        console.error('Error inesperado al crear el hongo:', response);
+      }
     } catch (error) {
       console.error('Error al crear hongo:', error);
+      toast.error('Error al crear el hongo');
     } finally {
       setLoading(false);
     }
@@ -88,14 +105,29 @@ const CrearHongo = () => {
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Nombre del hongo */}
           <div>
-            <label htmlFor="nombreCientifico" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="nombre_es" className="block text-sm font-medium text-gray-700 mb-2">
               Nombre del hongo
             </label>
             <input
               type="text"
-              id="nombreCientifico"
-              name="nombreCientifico"
-              value={formData.nombreCientifico}
+              id="nombre_es"
+              name="nombre_es"
+              value={formState.nombre_es}
+              onChange={handleInputChange}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+              placeholder="Ej: Pleurotus ostreatus"
+              required
+            />
+          </div>
+          <div>
+            <label htmlFor="nombre_nah" className="block text-sm font-medium text-gray-700 mb-2">
+              Nombre del hongo (Náhuatl)
+            </label>
+            <input
+              type="text"
+              id="nombre_nah"
+              name="nombre_nah"
+              value={formState.nombre_nah}
               onChange={handleInputChange}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
               placeholder="Ej: Pleurotus ostreatus"
@@ -105,17 +137,31 @@ const CrearHongo = () => {
 
           {/* Descripción */}
           <div>
-            <label htmlFor="descripcion" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="descripcion_es" className="block text-sm font-medium text-gray-700 mb-2">
               Descripción
             </label>
             <textarea
-              id="descripcion"
-              name="descripcion"
-              value={formData.descripcion}
+              id="descripcion_es"
+              name="descripcion_es"
+              value={formState.descripcion_es}
               onChange={handleInputChange}
               rows={4}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-vertical"
               placeholder="Describe las características físicas del hongo..."
+            />
+          </div>
+          <div>
+            <label htmlFor="descripcion_nah" className="block text-sm font-medium text-gray-700 mb-2">
+              Descripción (Náhuatl)
+            </label>
+            <textarea
+              id="descripcion_nah"
+              name="descripcion_nah"
+              value={formState.descripcion_nah}
+              onChange={handleInputChange}
+              rows={4}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-vertical"
+              placeholder="Describe las características físicas del hongo en náhuatl..."
             />
           </div>
 
@@ -127,7 +173,7 @@ const CrearHongo = () => {
             <textarea
               id="usos"
               name="usos"
-              value={formData.usos}
+              value={formState.usos}
               onChange={handleInputChange}
               rows={4}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-vertical"
@@ -137,13 +183,13 @@ const CrearHongo = () => {
 
           {/* Técnicas de Recolección */}
           <div>
-            <label htmlFor="tecnicasRecoleccion" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="tecnicas_recoleccion" className="block text-sm font-medium text-gray-700 mb-2">
               Técnicas de Recolección
             </label>
             <textarea
-              id="tecnicasRecoleccion"
-              name="tecnicasRecoleccion"
-              value={formData.tecnicasRecoleccion}
+              id="tecnicas_recoleccion"
+              name="tecnicas_recoleccion"
+              value={formState.tecnicas_recoleccion}
               onChange={handleInputChange}
               rows={4}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-vertical"
@@ -159,7 +205,7 @@ const CrearHongo = () => {
             <textarea
               id="cultivo"
               name="cultivo"
-              value={formData.cultivo}
+              value={formState.cultivo}
               onChange={handleInputChange}
               rows={4}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-vertical"
@@ -175,7 +221,7 @@ const CrearHongo = () => {
             <textarea
               id="conservacion"
               name="conservacion"
-              value={formData.conservacion}
+              value={formState.conservacion}
               onChange={handleInputChange}
               rows={4}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-vertical"
@@ -191,7 +237,7 @@ const CrearHongo = () => {
             <textarea
               id="ritualidad"
               name="ritualidad"
-              value={formData.ritualidad}
+              value={formState.ritualidad}
               onChange={handleInputChange}
               rows={4}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-vertical"
@@ -201,13 +247,13 @@ const CrearHongo = () => {
 
           {/* Significado Local */}
           <div>
-            <label htmlFor="significadoLocal" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="significado_local" className="block text-sm font-medium text-gray-700 mb-2">
               Significado Local
             </label>
             <textarea
-              id="significadoLocal"
-              name="significadoLocal"
-              value={formData.significadoLocal}
+              id="significado_local"
+              name="significado_local"
+              value={formState.significado_local}
               onChange={handleInputChange}
               rows={4}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-vertical"
@@ -225,14 +271,14 @@ const CrearHongo = () => {
               <select
                 id="tipo"
                 name="tipo"
-                value={formData.tipo}
+                value={formState.tipo}
                 onChange={handleInputChange}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                 required
               >
                 <option value="">Selecciona tipo</option>
-                <option value="Silvestre">Silvestre</option>
-                <option value="Cultivo">Cultivo</option>
+                <option value="1">Silvestre</option>
+                <option value="0">Cultivo</option>
               </select>
             </div>
 
@@ -247,8 +293,8 @@ const CrearHongo = () => {
                     type="radio"
                     name="comestible"
                     value="true"
-                    checked={formData.comestible === true}
-                    onChange={() => setFormData(prev => ({ ...prev, comestible: true }))}
+                    checked={formState.comestible === 'Si' || formState.comestible === 'Sí'}
+                    onChange={() => setFormState(prev => ({ ...prev, comestible: 'Si' }))}
                     className="mr-2 text-green-600 focus:ring-teal-500"
                   />
                   <span className="text-green-600 font-medium">✓ Sí Comestible</span>
@@ -258,8 +304,8 @@ const CrearHongo = () => {
                     type="radio"
                     name="comestible"
                     value="false"
-                    checked={formData.comestible === false}
-                    onChange={() => setFormData(prev => ({ ...prev, comestible: false }))}
+                    checked={formState.comestible === 'No'}
+                    onChange={() => setFormState(prev => ({ ...prev, comestible: 'No' }))}
                     className="mr-2 text-red-600 focus:ring-teal-500"
                   />
                   <span className="text-red-600 font-medium">✗ No Comestible</span>
@@ -295,9 +341,9 @@ const CrearHongo = () => {
                 <p className="text-xs text-gray-500">PNG, JPG, GIF hasta 10MB</p>
               </div>
             </div>
-            {formData.imagen && (
+            {formState.imagen && (
               <div className="mt-2">
-                <p className="text-sm text-gray-600">Archivo seleccionado: {formData.imagen.name}</p>
+                <p className="text-sm text-gray-600">Archivo seleccionado: {formState.imagen.name}</p>
               </div>
             )}
           </div>
