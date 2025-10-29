@@ -98,15 +98,7 @@ const EditarHongo = () => {
 
     try {
       // Crear FormData sin la imagen
-      const formDataToSend = new FormData();
-      for (const key in formData) {
-        if (key !== 'imagen' && formData[key] !== null) {
-          formDataToSend.append(key, formData[key]);
-        }
-      }
-
-      // Actualizar el hongo sin imagen
-      const response = await hongosAPI.update(id, formDataToSend);
+      const response = await hongosAPI.update(id, formData);
       
       if (response) {
         // Si hay nueva imagen, subirla usando el nuevo endpoint
