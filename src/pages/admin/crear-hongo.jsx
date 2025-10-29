@@ -46,16 +46,7 @@ const CrearHongo = () => {
 
     try {
       // Crear FormData sin la imagen
-      const adminHongoFormData = new FormData();
-      Object.entries(formState).forEach(([key, value]) => {
-        // Excluir la imagen del FormData inicial
-        if (key !== 'imagen' && value !== null) {
-          adminHongoFormData.append(key, value);
-        }
-      });
-
-      // Crear el hongo sin imagen
-      const response = await hongosAPI.create(adminHongoFormData);
+      const response = await hongosAPI.create(formState);
       
       if (response && response.id) {
         // Si hay imagen, subirla usando el nuevo endpoint

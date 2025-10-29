@@ -1,12 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
-    { "source": "/admin/login", "destination": "/admin/login" },
-    { "source": "/admin/hongos", "destination": "/admin/hongos" },
-    { "source": "/admin/hongos/crear", "destination": "/admin/hongos/crear" },
-    { "source": "/admin/hongos/editar/:id", "destination": "/admin/hongos/editar/:id" },
-    { "source": "/admin/usuarios", "destination": "/admin/usuarios" },
-    { "source": "/admin/usuarios/crear", "destination": "/admin/usuarios/crear" },
-    { "source": "/admin/usuarios/editar/:id", "destination": "/admin/usuarios/editar/:id" }
+    { "source": "/(.*)", "destination": "/" }
   ]
 }

@@ -55,10 +55,8 @@ export const hongosAPI = {
     try {
       const response = await fetch(`${API_BASE_URL}/hongos`, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
-        },
-        body: hongoData
+        headers: getHeaders(),
+        body: JSON.stringify(hongoData)
       });
       
       if (!response.ok) {
@@ -77,10 +75,8 @@ export const hongosAPI = {
     try {
       const response = await fetch(`${API_BASE_URL}/hongos/${id}`, {
         method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
-        },
-        body: hongoData
+        headers: getHeaders(),
+        body: JSON.stringify(hongoData)
       });
       
       if (!response.ok) {
