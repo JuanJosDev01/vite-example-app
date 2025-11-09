@@ -7,9 +7,11 @@ import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 import { hongosAPI, imagenesAPI } from './admin/api';
+import { useLanguage } from '../context/LanguageContext';
 
 export const Ficha = () => {
     const { id } = useParams();
+    const { currentLanguage, toggleLanguage, getFieldByLanguage, t } = useLanguage();
     const [activeTab, setActiveTab] = useState("descripcion");
     const [hongo, setHongo] = useState(null);
     const [imagenes, setImagenes] = useState([]);
@@ -51,7 +53,7 @@ export const Ficha = () => {
             <div className="min-h-screen bg-gray-100 flex items-center justify-center">
                 <div className="text-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
-                    <p className="text-xl text-gray-600 mt-4">Cargando información del hongo...</p>
+                    <p className="text-xl text-gray-600 mt-4">{t('loading')}</p>
                 </div>
             </div>
         );
@@ -61,12 +63,12 @@ export const Ficha = () => {
         return (
             <div className="min-h-screen bg-gray-100 flex items-center justify-center">
                 <div className="text-center">
-                    <p className="text-xl text-red-600 mb-4">{error}</p>
+                    <p className="text-xl text-red-600 mb-4">{t('error')}</p>
                     <Link
                         to="/"
                         className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded font-medium"
                     >
-                        ← Volver al catálogo
+                        {t('backToCatalog')}
                     </Link>
                 </div>
             </div>
@@ -77,12 +79,12 @@ export const Ficha = () => {
         return (
             <div className="min-h-screen bg-gray-100 flex items-center justify-center">
                 <div className="text-center">
-                    <p className="text-xl text-gray-600 mb-4">Hongo no encontrado</p>
+                    <p className="text-xl text-gray-600 mb-4">{t('notFound')}</p>
                     <Link
                         to="/"
                         className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded font-medium"
                     >
-                        ← Volver al catálogo
+                        {t('backToCatalog')}
                     </Link>
                 </div>
             </div>
@@ -90,18 +92,18 @@ export const Ficha = () => {
     }
 
     // Función helper para mostrar contenido o mensaje por defecto
-    const renderContent = (content, defaultMessage = "Información no disponible") => {
-        return content && content.trim() ? content : defaultMessage;
+    const renderContent = (content, defaultMessage = null) => {
+        return content && content.trim() ? content : (defaultMessage || t('noInfo'));
     };
 
     const tabs = [
-        { key: 'descripcion', label: 'Descripción' },
-        { key: 'usos', label: 'Usos' },
-        { key: 'tecnicas', label: 'Técnicas de recolección' },
-        { key: 'cultivo', label: 'Cultivo' },
-        { key: 'conservacion', label: 'Conservación' },
-        { key: 'ritualidad', label: 'Ritualidad' },
-        { key: 'significado', label: 'Significado Local' }
+        { key: 'descripcion', label: t('tabs.descripcion') },
+        { key: 'usos', label: t('tabs.usos') },
+        { key: 'tecnicas', label: t('tabs.tecnicas') },
+        { key: 'cultivo', label: t('tabs.cultivo') },
+        { key: 'conservacion', label: t('tabs.conservacion') },
+        { key: 'ritualidad', label: t('tabs.ritualidad') },
+        { key: 'significado', label: t('tabs.significado') }
     ];
 
     return (
@@ -109,7 +111,7 @@ export const Ficha = () => {
             {/* Header Verde */}
             <header className="bg-green-600 text-white p-4">
                 <h1 className="text-2xl font-bold text-center">
-                    {hongo.nombre_es} - Ficha Profesional
+                    {getFieldByLanguage(hongo, 'nombre')} - {t('professionalCard')}
                 </h1>
 
                 {/* Botones de navegación */}
@@ -118,10 +120,13 @@ export const Ficha = () => {
                         to="/"
                         className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-medium transition-colors"
                     >
-                        ← Volver al catálogo
+                        {t('backToCatalog')}
                     </Link>
-                    <button className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 rounded text-sm font-medium transition-colors">
-                        🏺 Cambiar a Náhuatl
+                    <button 
+                        onClick={toggleLanguage}
+                        className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 rounded text-sm font-medium transition-colors"
+                    >
+                        {currentLanguage === 'es' ? t('changeToNahuatl') : t('changeToSpanish')}
                     </button>
                 </div>
             </header>
@@ -156,7 +161,7 @@ export const Ficha = () => {
                     ) : (
                         <div className="text-center py-8">
                             <div className="text-gray-400 text-6xl mb-4">🍄</div>
-                            <p className="text-gray-500">No hay imágenes disponibles para este hongo</p>
+                            <p className="text-gray-500">{t('noImages')}</p>
                         </div>
                     )}
                 </div>
@@ -166,27 +171,32 @@ export const Ficha = () => {
                     <div className="flex items-center justify-between flex-wrap gap-4">
                         <div>
                             <h2 className="text-2xl font-bold text-gray-800">
-                                {hongo.nombre_es}
+                                {getFieldByLanguage(hongo, 'nombre')}
                             </h2>
-                            {hongo.nombre_nah && (
+                            {currentLanguage === 'es' && hongo.nombre_nah && (
                                 <p className="text-lg text-gray-600 italic mt-1">
-                                    {hongo.nombre_nah}
+                                    ({hongo.nombre_nah})
+                                </p>
+                            )}
+                            {currentLanguage === 'nah' && hongo.nombre_es && (
+                                <p className="text-lg text-gray-600 italic mt-1">
+                                    ({hongo.nombre_es})
                                 </p>
                             )}
                         </div>
                         <div className="flex gap-2">
                             {hongo.comestible === 1 ? (
                                 <span className="bg-green-500 text-white px-3 py-1 rounded-full text-sm font-medium">
-                                    Comestible
+                                    {t('edible')}
                                 </span>
                             ) : (
                                 <span className="bg-red-500 text-white px-3 py-1 rounded-full text-sm font-medium">
-                                    No Comestible
+                                    {t('notEdible')}
                                 </span>
                             )}
                             {hongo.tipo === "1" && (
                                 <span className="bg-blue-500 text-white px-3 py-1 rounded-full text-sm font-medium">
-                                    Cultivado
+                                    {t('cultivated')}
                                 </span>
                             )}
                         </div>
@@ -217,25 +227,25 @@ export const Ficha = () => {
                     <div className="p-6">
                         <div className="text-gray-700 leading-relaxed">
                             {activeTab === 'descripcion' && (
-                                <p>{renderContent(hongo.descripcion_es)}</p>
+                                <p>{renderContent(getFieldByLanguage(hongo, 'descripcion'))}</p>
                             )}
                             {activeTab === 'usos' && (
-                                <p>{renderContent(hongo.usos)}</p>
+                                <p>{renderContent(getFieldByLanguage(hongo, 'usos'))}</p>
                             )}
                             {activeTab === 'tecnicas' && (
-                                <p>{renderContent(hongo.tecnicas_recoleccion)}</p>
+                                <p>{renderContent(getFieldByLanguage(hongo, 'tecnicas_recoleccion'))}</p>
                             )}
                             {activeTab === 'cultivo' && (
-                                <p>{renderContent(hongo.cultivo)}</p>
+                                <p>{renderContent(getFieldByLanguage(hongo, 'cultivo'))}</p>
                             )}
                             {activeTab === 'conservacion' && (
-                                <p>{renderContent(hongo.conservacion)}</p>
+                                <p>{renderContent(getFieldByLanguage(hongo, 'conservacion'))}</p>
                             )}
                             {activeTab === 'ritualidad' && (
-                                <p>{renderContent(hongo.ritualidad)}</p>
+                                <p>{renderContent(getFieldByLanguage(hongo, 'ritualidad'))}</p>
                             )}
                             {activeTab === 'significado' && (
-                                <p>{renderContent(hongo.significado_local)}</p>
+                                <p>{renderContent(getFieldByLanguage(hongo, 'significado_local'))}</p>
                             )}
                         </div>
                     </div>
@@ -243,7 +253,7 @@ export const Ficha = () => {
                 </div>
                 <div className="flex items-center justify-center my-4">
                     <div>
-                        <h3 className="font-bold text-2xl mb-2" >Ubicación del Hongo</h3>
+                        <h3 className="font-bold text-2xl mb-2" >{t('mushroomLocation')}</h3>
                         <Map position={[
                             hongo.lat_coord || 19.4326,
                             hongo.long_coord || -99.1332

@@ -1,21 +1,11 @@
 import { LuSearch } from "react-icons/lu";
 import { useNavigate } from "react-router";
 import { useState, useEffect } from "react";
+import { useLanguage } from '../context/LanguageContext';
 
-export const Card = ({
-  nombre_es,
-  tipo,
-  comestible,
-  descripcion_es,
-  conservacion,
-  cultivo,
-  ritualidad,
-  significado_local,
-  tecnicas_recoleccion,
-  usos,
-  id_hongo 
-}) => {
+export const Card = ({ hongo, id_hongo }) => {
   const navigate = useNavigate();
+  const { getFieldByLanguage, t } = useLanguage();
   const [primeraImagen, setPrimeraImagen] = useState(null);
 
   useEffect(() => {
@@ -39,12 +29,19 @@ export const Card = ({
   const verFicha = () => {
     navigate(`/ficha/${id_hongo}`);
   }
+
+  // Función para truncar texto
+  const truncate = (text, length = 80) => {
+    if (!text) return '';
+    return text.length > length ? text.substring(0, length) + '...' : text;
+  };
+
   return (
     <div className="bg-white rounded-xl overflow-hidden w-80 shadow-lg">
       {primeraImagen ? (
         <img 
           src={primeraImagen} 
-          alt={nombre_es} 
+          alt={getFieldByLanguage(hongo, 'nombre')} 
           className="w-full h-40 object-cover" 
         />
       ) : (
@@ -53,46 +50,46 @@ export const Card = ({
         </div>
       )}
       <div className="p-4">
-        <h2 className="text-lg font-bold text-blue-500 mb-2">{nombre_es}</h2>
+        <h2 className="text-lg font-bold text-blue-500 mb-2">{getFieldByLanguage(hongo, 'nombre')}</h2>
         <div className="flex gap-1 mb-1">
-          <span className="font-bold">Tipo:</span>
-          <span>{tipo === "0" ? "Comestible" : tipo}</span>
+          <span className="font-bold">{t('type')}</span>
+          <span>{hongo.tipo === "0" ? t('edible') : hongo.tipo}</span>
         </div>
         <div className="flex gap-1 mb-1">
-          <span className="font-bold">Comestible:</span>
-          <span>{comestible}</span>
+          <span className="font-bold">{t('edible')}</span>
+          <span>{hongo.comestible === 1 ? 'Sí' : 'No'}</span>
         </div>
         <div className="mb-1">
-          <span className="font-bold">Descripción:</span>
-          <span> {descripcion_es}</span>
+          <span className="font-bold">{t('description')}</span>
+          <span> {truncate(getFieldByLanguage(hongo, 'descripcion'))}</span>
         </div>
         <div className="mb-1">
-          <span className="font-bold">Conservación:</span>
-          <span> {conservacion}</span>
+          <span className="font-bold">{t('conservation')}</span>
+          <span> {truncate(getFieldByLanguage(hongo, 'conservacion'))}</span>
         </div>
         <div className="mb-1">
-          <span className="font-bold">Cultivo:</span>
-          <span> {cultivo}</span>
+          <span className="font-bold">{t('cultivation')}</span>
+          <span> {truncate(getFieldByLanguage(hongo, 'cultivo'))}</span>
         </div>
         <div className="mb-1">
-          <span className="font-bold">Ritualidad:</span>
-          <span> {ritualidad}</span>
+          <span className="font-bold">{t('rituality')}</span>
+          <span> {truncate(getFieldByLanguage(hongo, 'ritualidad'))}</span>
         </div>
         <div className="mb-1">
-          <span className="font-bold">Significado local:</span>
-          <span> {significado_local}</span>
+          <span className="font-bold">{t('localMeaning')}</span>
+          <span> {truncate(getFieldByLanguage(hongo, 'significado_local'))}</span>
         </div>
         <div className="mb-1">
-          <span className="font-bold">Técnicas de recolección:</span>
-          <span> {tecnicas_recoleccion}</span>
+          <span className="font-bold">{t('harvestingTechniques')}</span>
+          <span> {truncate(getFieldByLanguage(hongo, 'tecnicas_recoleccion'))}</span>
         </div>
         <div className="mb-1">
-          <span className="font-bold">Usos:</span>
-          <span> {usos}</span>
+          <span className="font-bold">{t('uses')}</span>
+          <span> {truncate(getFieldByLanguage(hongo, 'usos'))}</span>
         </div>
         <button className="bg-blue-500 cursor-pointer hover:bg-blue-600 transition-all duration-200 text-white px-4 py-2 rounded-lg w-full flex items-center justify-center gap-1 mt-4" onClick={verFicha}>
           <LuSearch />
-          Ver ficha
+          {t('viewCard')}
         </button>
       </div>
     </div>

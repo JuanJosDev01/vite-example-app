@@ -4,10 +4,11 @@ import { LuFilter, LuGalleryHorizontal } from "react-icons/lu";
 import { ModalComponent } from "../components/Modal";
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { hongosAPI } from './admin/api';
+import { useLanguage } from '../context/LanguageContext';
 
 
 export const Lista = () => {
-
+  const { currentLanguage, toggleLanguage, t } = useLanguage();
   const [hongos, setHongos] = useState([]);
   const [modalIsOpen, setIsOpen] = useState(false);
   
@@ -26,10 +27,16 @@ export const Lista = () => {
 
   return (
     <Fragment>
-      <header className="bg-green-600 w-full h-20 flex items-center justify-center">
+      <header className="bg-green-600 w-full h-20 flex items-center justify-between px-6">
         <h1 className="text-3xl font-bold text-white" id="prueba">
-          Catálogo Profesional de Hongos
+          {t('catalog')}
         </h1>
+        <button 
+          onClick={toggleLanguage}
+          className="bg-white hover:bg-gray-100 text-green-600 px-4 py-2 rounded text-sm font-medium transition-colors"
+        >
+          {currentLanguage === 'es' ? t('changeToNahuatl') : t('changeToSpanish')}
+        </button>
       </header>
 
       <main className="bg-gray-100 w-full min-h-screen">
@@ -37,25 +44,25 @@ export const Lista = () => {
         <form className="flex gap-2 justify-center items-center pt-4">
           <input
             type="text"
-            placeholder="Buscar por nombre..."
+            placeholder={t('search')}
             className="rounded-lg p-2 border border-gray-300 bg-white"
           />
           <select className="rounded-lg p-2 border border-gray-300 bg-white">
-            <option value="">Todos los tipos</option>
-            <option value="comestible">Comestible</option>
-            <option value="incomestible">Incomestible</option>
+            <option value="">{t('allTypes')}</option>
+            <option value="comestible">{t('edible')}</option>
+            <option value="incomestible">{t('inedible')}</option>
           </select>
           <select className="rounded-lg p-2 border border-gray-300 bg-white">
-            <option value="">Todos</option>
-            <option value="vivo">Vivo</option>
-            <option value="muerto">Muerto</option>
+            <option value="">{t('all')}</option>
+            <option value="vivo">{t('living')}</option>
+            <option value="muerto">{t('dead')}</option>
           </select>
           <button
             type="submit"
             className="rounded-lg bg-green-600 text-white p-2 cursor-pointer flex items-center gap-1"
           >
             <LuFilter />
-            Filtrar
+            {t('filter')}
           </button>
         </form>
 
@@ -64,17 +71,7 @@ export const Lista = () => {
           {hongos.map((hongo) => (
             <Card
               key={hongo.id_hongo}
-              imagen={hongo.imagen}
-              nombre_es={hongo.nombre_es}
-              tipo={hongo.tipo}
-              comestible={hongo.comestible}
-              descripcion_es={hongo.descripcion_es}
-              conservacion={hongo.conservacion}
-              cultivo={hongo.cultivo}
-              ritualidad={hongo.ritualidad}
-              significado_local={hongo.significado_local}
-              tecnicas_recoleccion={hongo.tecnicas_recoleccion}
-              usos={hongo.usos}
+              hongo={hongo}
               id_hongo={hongo.id_hongo}
             />
           ))}
