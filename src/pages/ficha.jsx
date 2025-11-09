@@ -28,7 +28,7 @@ export const Ficha = () => {
                 // Obtener imágenes del hongo usando la API
                 try {
                     const imagenesResponse = await imagenesAPI.getByHongoId(id);
-                    setImagenes(imagenesResponse || []);
+                    setImagenes(imagenesResponse?.map(imagen => imagen.url_imagen) || []);
                 } catch (imageError) {
                     console.error('Error al cargar imágenes:', imageError);
                     setImagenes([]);
@@ -144,14 +144,11 @@ export const Ficha = () => {
                             className="mySwiper"
                         >
                             {imagenes.map((imagen, index) => (
-                                <SwiperSlide key={imagen.id || index}>
+                                <SwiperSlide key={imagen || index}>
                                     <img
-                                        src={`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/imagenes/${imagen.id}`}
+                                        src={imagen}
                                         alt={`${hongo.nombre_es} - Imagen ${index + 1}`}
                                         className="w-full max-w-2xl mx-auto h-80 object-cover rounded-lg"
-                                        onError={(e) => {
-                                            e.target.src = '/placeholder-mushroom.jpg';
-                                        }}
                                     />
                                 </SwiperSlide>
                             ))}

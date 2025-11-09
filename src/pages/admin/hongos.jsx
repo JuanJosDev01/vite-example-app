@@ -32,7 +32,7 @@ const HongosAdmin = () => {
         try {
           const imagenes = await imagenesAPI.getByHongoId(hongo.id_hongo);
           if (imagenes && imagenes.length > 0) {
-            imagenesMap[hongo.id_hongo] = imagenes[0].id;
+            imagenesMap[hongo.id_hongo] = imagenes[0]?.url_imagen;
           }
         } catch (imageError) {
           console.error(`Error al cargar imágenes del hongo ${hongo.id_hongo}:`, imageError);
@@ -73,7 +73,6 @@ const HongosAdmin = () => {
   const verSitio = () => {
     window.open('/', '_blank');
   };
-
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -119,7 +118,7 @@ const HongosAdmin = () => {
             <div className="flex items-start gap-3 mb-3">
               {imagenesHongos[hongo.id_hongo] ? (
                 <img
-                  src={`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/imagenes/${imagenesHongos[hongo.id_hongo]}`}
+                  src={imagenesHongos[hongo.id_hongo]}
                   alt={hongo.nombre_es}
                   className="w-12 h-12 object-cover rounded-lg"
                 />

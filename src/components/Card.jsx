@@ -25,7 +25,7 @@ export const Card = ({
         if (response.ok) {
           const imagenes = await response.json();
           if (imagenes && imagenes.length > 0) {
-            setPrimeraImagen(imagenes[0].id);
+            setPrimeraImagen(imagenes[0].url_imagen);
           }
         }
       } catch (error) {
@@ -43,7 +43,7 @@ export const Card = ({
     <div className="bg-white rounded-xl overflow-hidden w-80 shadow-lg">
       {primeraImagen ? (
         <img 
-          src={`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/imagenes/${primeraImagen}`} 
+          src={primeraImagen} 
           alt={nombre_es} 
           className="w-full h-40 object-cover" 
         />

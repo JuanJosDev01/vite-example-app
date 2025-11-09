@@ -371,10 +371,10 @@ const EditarHongo = () => {
                   className="mySwiper"
                 >
                   {imagenesExistentes.map((imagen, index) => (
-                    <SwiperSlide key={imagen.id || index}>
+                    <SwiperSlide key={imagen || index}>
                       <div className="relative group">
                         <img
-                          src={`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/imagenes/${imagen.id}`}
+                          src={imagen.url_imagen}
                           alt={`Imagen ${index + 1}`}
                           className="w-full h-48 object-cover rounded-lg shadow-md"
                         />
